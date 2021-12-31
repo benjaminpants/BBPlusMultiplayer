@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace BaldiNetworking
 {
 
-	public enum PlayerRPCs : byte //maybe get guilty RPC isn't necessary but oh well
+	public enum PlayerObjectRPCs : byte //maybe get guilty RPC isn't necessary but oh well
 	{
 		UpdatePosition,
 		UseItem,
@@ -26,7 +26,7 @@ namespace BaldiNetworking
 
 		public void SendUseItemPacket(Connection tosend, byte slot)
 		{
-			MessageWriter writer = this.CreateMessageWriter(32,true, (byte)PlayerRPCs.UseItem);
+			MessageWriter writer = this.CreateMessageWriter(32,true, (byte)PlayerObjectRPCs.UseItem);
 			writer.Write(slot);
 			writer.EndMessage();
 			tosend.Send(writer);

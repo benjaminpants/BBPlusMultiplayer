@@ -25,6 +25,8 @@ namespace BaldiServer
 		}
 
 
+
+
 		static int ClearDisconnectedPlayers()
 		{
 			int amount_cleared = Players.Count;
@@ -45,12 +47,13 @@ namespace BaldiServer
 			ClearDisconnectedPlayers();
 		}
 
-		static void CreatePlayer(Connection connect, bool amhost)
+		static PlayerClient CreatePlayer(Connection connect, bool amhost)
 		{
 			PlayerClient client = new PlayerClient(connect,amhost,(byte)(Players.Count + 1));
 			Players.Add(client);
 			connect.Disconnected += client.DisconnectPlayer;
 			connect.Disconnected += DisconnectPlayer;
+			return client;
 		}
 
 
@@ -77,10 +80,13 @@ namespace BaldiServer
 			Console.WriteLine("Connection recieved, attempting to send data packet!");
 			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ServerPacket,(byte)ServerRPCs.WelcomeSendData);
 			writer.Write(Players.Count == 0); //Should this player be the host?
+			
+			PlayerClient pl = CreatePlayer(connect, Players.Count == 0);
+			writer.Write(Players);
+			writer.Write(pl.PlayerID);
 			writer.EndMessage();
 			connect.Send(writer);
 			writer.Recycle();
-			CreatePlayer(connect, Players.Count == 0);
 		}
 
 

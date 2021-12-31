@@ -17,6 +17,7 @@ namespace BaldiNetworking
 		public Connection Connection;
 		public byte PlayerID = 0;
 		public bool AmHost = false;
+		public string Username = "Loading...";
 		public PlayerNetState NetState = PlayerNetState.Disconnected;
 
 		public PlayerClient()

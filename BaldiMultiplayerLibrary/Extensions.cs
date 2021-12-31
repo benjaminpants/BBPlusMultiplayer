@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace BaldiNetworking
 {
-	static class NetExtensions
+	public static class NetExtensions
 	{
 		//List<PlayerClient>
 

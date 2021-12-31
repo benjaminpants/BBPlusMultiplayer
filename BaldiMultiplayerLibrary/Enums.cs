@@ -8,6 +8,7 @@ namespace BaldiNetworking
 	{
 		ServerPacket = 3,
 		GameStatePacket,
+		ClientPacket,
 		ObjectPacket
 	}
 
@@ -17,5 +18,12 @@ namespace BaldiNetworking
 		WelcomeSendData,
 		ChangeHost,
 		GameStarted
+	}
+
+	public enum PlayerRPCs : byte
+	{
+		SetName,
+		EnterElevator,
+		GameStart
 	}
 }

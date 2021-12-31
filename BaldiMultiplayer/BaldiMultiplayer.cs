@@ -7,6 +7,7 @@ using Hazel;
 using System.Net;
 using BaldiNetworking;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 namespace BaldiMultiplayer
@@ -25,10 +26,10 @@ namespace BaldiMultiplayer
 
 		public static List<PlayerClient> Players = new List<PlayerClient>();
 
+		public static PlayerClient MyPlayer;
+
 		void DataRecieved(DataReceivedEventArgs data)
 		{
-
-
 			data.Message.ReadByte(); //2 bytes of bullshit
 			data.Message.ReadByte();
 			byte packet_type = data.Message.ReadByte();
@@ -39,8 +40,12 @@ namespace BaldiMultiplayer
 					switch (second_tag)
 					{
 						case (byte)ServerRPCs.WelcomeSendData:
+							Console.WriteLine("Succesfully recieved welcome message from server!");
 							AmIHost = data.Message.ReadBoolean();
 							GameDat = GameData.Deserialize(data.Message);
+							Players = data.Message.ReadPlayerList();
+							byte myid = data.Message.ReadByte();
+							MyPlayer = Players.Find(p => p.PlayerID == myid);
 							NameMenuManager.AllowContinue(true);
 							break;
 						default:
@@ -48,7 +53,7 @@ namespace BaldiMultiplayer
 					}
 					break;
 				default:
-					Debug.LogWarning("Unknown/Unimplemented Packet Type:" + data.Message.Tag);
+					Console.WriteLine("Unknown/Unimplemented Packet Type:" + data.Message.Tag);
 					break;
 			}
 		}
@@ -69,6 +74,17 @@ namespace BaldiMultiplayer
 
 		}
 
+		void OnSceneChange(Scene scene, LoadSceneMode mode)
+		{
+			if (scene.name == "MainMenu")
+			{
+				Console.WriteLine("Loaded main menu! Sending save name to server!");
+
+				MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ClientPacket,(byte)PlayerRPCs.SetName);
+
+				SceneManager.sceneLoaded -= OnSceneChange;
+			}
+		}
 
 		void Awake()
 		{
@@ -76,6 +92,8 @@ namespace BaldiMultiplayer
 			harmony.PatchAll();
 			NameMenuManager.AddPreStartPage("mp_connect_button", true);
 			NameMenuManager.AddToPage("mp_connect_button",new MenuGeneric("connect_button", "Connect", Connect));
+
+			SceneManager.sceneLoaded += OnSceneChange;
 
 		}
 	}

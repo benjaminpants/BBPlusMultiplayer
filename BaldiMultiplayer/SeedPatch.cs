@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using HarmonyLib;
 
-namespace BaldiMultiplayerBepInEx
+namespace BaldiMultiplayer
 {
 	[HarmonyPatch(typeof(CoreGameManager))]
 	[HarmonyPatch("Seed")]
@@ -11,7 +11,7 @@ namespace BaldiMultiplayerBepInEx
 	{
 		static bool Prefix(ref int __result)
 		{
-			__result = 128;
+			__result = BasePlugin.GameDat.Seed;
 			return false;
 		}
 	}

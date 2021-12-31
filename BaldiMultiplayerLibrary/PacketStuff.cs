@@ -5,7 +5,7 @@ using Hazel;
 using Hazel.Udp;
 using BaldiNetworking;
 
-namespace BaldiServer
+namespace BaldiNetworking
 {
 	public class PacketStuff
 	{
