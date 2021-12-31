@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace BaldiNetworking
 {
-	public class NetObject : MonoBehaviour
+	public class NetObject
 	{
 
 		public int ObjectID;
@@ -14,9 +14,24 @@ namespace BaldiNetworking
 			writer.Write(ObjectID);
 		}
 
+
+
+		public MessageWriter CreateMessageWriter(int buffersize, bool reliable, byte messageflag)
+		{
+			MessageWriter writer = new MessageWriter(buffersize + 32 + 8);
+			if (reliable)
+			{
+				writer.Clear(SendOption.Reliable);
+			}
+			writer.StartMessage((byte)TopRPCs.ObjectPacket);
+			writer.Write(ObjectID);
+			writer.Write(messageflag);
+			return writer;
+		}
+
 		public virtual void Deserialize(MessageReader reader)
 		{
-			//ignore object ID as that should be handled by whatever code is doing the thing
+			//ignore object ID as that should have already been read by now.
 		}
 	}
 }
