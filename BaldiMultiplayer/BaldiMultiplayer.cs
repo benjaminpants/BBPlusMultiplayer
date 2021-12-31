@@ -28,6 +28,8 @@ namespace BaldiMultiplayer
 
 		public static PlayerClient MyPlayer;
 
+		public static byte MyPlayerID;
+
 		void DataRecieved(DataReceivedEventArgs data)
 		{
 			data.Message.ReadByte(); //2 bytes of bullshit
@@ -43,9 +45,14 @@ namespace BaldiMultiplayer
 							Console.WriteLine("Succesfully recieved welcome message from server!");
 							AmIHost = data.Message.ReadBoolean();
 							GameDat = GameData.Deserialize(data.Message);
+							MyPlayerID = data.Message.ReadByte();
 							Players = data.Message.ReadPlayerList();
-							byte myid = data.Message.ReadByte();
-							MyPlayer = Players.Find(p => p.PlayerID == myid);
+							MyPlayer = Players.Find(p => p.PlayerID == MyPlayerID);
+							if (MyPlayer == null)
+							{
+								Players.Add(new PlayerClient(null, AmIHost, MyPlayerID));
+								MyPlayer = Players[Players.Count - 1];
+							}
 							NameMenuManager.AllowContinue(true);
 							break;
 						default:
@@ -56,6 +63,7 @@ namespace BaldiMultiplayer
 					Console.WriteLine("Unknown/Unimplemented Packet Type:" + data.Message.Tag);
 					break;
 			}
+			data.Message.Recycle();
 		}
 
 		void Connect(MenuObject ject)
@@ -79,8 +87,13 @@ namespace BaldiMultiplayer
 			if (scene.name == "MainMenu")
 			{
 				Console.WriteLine("Loaded main menu! Sending save name to server!");
-
-				MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ClientPacket,(byte)PlayerRPCs.SetName);
+				MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ClientPacket,(byte)ClientRPCs.SetName);
+				Console.WriteLine(MyPlayer.PlayerID);
+				writer.Write(MyPlayer.PlayerID);
+				writer.Write(Singleton<PlayerFileManager>.Instance.fileName);
+				writer.EndMessage();
+				connection.Send(writer);
+				writer.Recycle();
 
 				SceneManager.sceneLoaded -= OnSceneChange;
 			}

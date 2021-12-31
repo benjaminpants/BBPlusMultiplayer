@@ -13,6 +13,8 @@ namespace BaldiServer
 
 		public static List<PlayerClient> Players = new List<PlayerClient>();
 
+		public static GameData Data = new GameData();
+
 
 		public static void SendToAllPlayers(MessageWriter writer)
 		{
@@ -67,6 +69,36 @@ namespace BaldiServer
 			CommandLoop();
 		}
 
+		static void DataRecieved(DataReceivedEventArgs data)
+		{
+			data.Message.ReadByte();
+			data.Message.ReadByte();
+			TopRPCs packet_type = (TopRPCs)data.Message.ReadByte();
+			Console.WriteLine(packet_type);
+			byte second_tag = data.Message.ReadByte();
+			Console.WriteLine(second_tag);
+			switch (packet_type)
+			{
+				case TopRPCs.ServerPacket:
+					Console.WriteLine("Why did I get sent a server packet? Odd. Disregarding.");
+					break;
+				case TopRPCs.ClientPacket:
+					ClientRPCs rpc = (ClientRPCs)second_tag;
+					switch (rpc)
+					{
+						case ClientRPCs.SetName:
+							byte ID = data.Message.ReadByte();
+							PlayerClient client = Players.Find(p => p.PlayerID == ID);
+							if (client == null) return;
+							if (client.Connection.EndPoint != data.Sender.EndPoint) return;
+							client.Username = data.Message.ReadString(); //TODO: Add name checks
+							break;
+					}
+					break;
+			}
+			data.Message.Recycle();
+		}
+
 		static void CommandLoop()
 		{
 			string thingy = Console.ReadLine();
@@ -78,12 +110,15 @@ namespace BaldiServer
 		{
 			Connection connect = args.Connection;
 			Console.WriteLine("Connection recieved, attempting to send data packet!");
+			connect.DataReceived += DataRecieved;
 			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ServerPacket,(byte)ServerRPCs.WelcomeSendData);
 			writer.Write(Players.Count == 0); //Should this player be the host?
 			
+
 			PlayerClient pl = CreatePlayer(connect, Players.Count == 0);
-			writer.Write(Players);
+			Data.Serialize(ref writer);
 			writer.Write(pl.PlayerID);
+			writer.Write(Players);
 			writer.EndMessage();
 			connect.Send(writer);
 			writer.Recycle();

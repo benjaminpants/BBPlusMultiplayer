@@ -20,7 +20,7 @@ namespace BaldiNetworking
 		GameStarted
 	}
 
-	public enum PlayerRPCs : byte
+	public enum ClientRPCs : byte
 	{
 		SetName,
 		EnterElevator,
