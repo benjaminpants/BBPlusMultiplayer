@@ -74,9 +74,7 @@ namespace BaldiServer
 			data.Message.ReadByte();
 			data.Message.ReadByte();
 			TopRPCs packet_type = (TopRPCs)data.Message.ReadByte();
-			Console.WriteLine(packet_type);
 			byte second_tag = data.Message.ReadByte();
-			Console.WriteLine(second_tag);
 			switch (packet_type)
 			{
 				case TopRPCs.ServerPacket:
@@ -91,7 +89,12 @@ namespace BaldiServer
 							PlayerClient client = Players.Find(p => p.PlayerID == ID);
 							if (client == null) return;
 							if (client.Connection.EndPoint != data.Sender.EndPoint) return;
-							client.Username = data.Message.ReadString(); //TODO: Add name checks
+							List<string> CurrentPlayerUsernames = new List<string>();
+							for (int i = 0; i < Players.Count; i++)
+							{
+								CurrentPlayerUsernames.Add(Players[i].Username);
+							}
+							client.Username = VerificationChecks.VerifyUsername(data.Message.ReadString(), CurrentPlayerUsernames);
 							break;
 					}
 					break;

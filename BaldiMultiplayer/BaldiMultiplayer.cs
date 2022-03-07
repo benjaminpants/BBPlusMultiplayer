@@ -95,6 +95,7 @@ namespace BaldiMultiplayer
 				connection.Send(writer);
 				writer.Recycle();
 
+
 				SceneManager.sceneLoaded -= OnSceneChange;
 			}
 		}

@@ -7,7 +7,15 @@ namespace BaldiNetworking
 {
 	public static class NetExtensions
 	{
-		//List<PlayerClient>
+
+
+		public static void Write(this MessageWriter writer, PlayerClient player)
+		{
+			writer.Write(player.AmHost);
+			writer.Write(player.PlayerID);
+			writer.Write(player.Username == "Loading..." ? "" : player.Username);
+		}
+
 
 		public static void Write(this MessageWriter writer, List<PlayerClient> list)
 		{
