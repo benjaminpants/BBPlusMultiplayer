@@ -9,6 +9,8 @@ namespace BaldiNetworking
 	{
 		Disconnected,
 		Connected,
+		FullyLoaded,
+		Waiting,
 		Ingame
 	}
 
@@ -26,7 +28,7 @@ namespace BaldiNetworking
 
 		public void DisconnectPlayer(object sender, DisconnectedEventArgs e)
 		{
-			Console.WriteLine("Player has disconnected:" + e.Reason);
+			Console.WriteLine(Username + " has disconnected: " + e.Reason);
 			NetState = PlayerNetState.Disconnected;
 		}
 

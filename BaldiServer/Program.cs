@@ -95,6 +95,16 @@ namespace BaldiServer
 								CurrentPlayerUsernames.Add(Players[i].Username);
 							}
 							client.Username = VerificationChecks.VerifyUsername(data.Message.ReadString(), CurrentPlayerUsernames);
+							client.NetState = PlayerNetState.FullyLoaded;
+							Console.WriteLine(client.Username + " has joined and gotten their username verified!");
+							break;
+						case ClientRPCs.EnterElevator:
+							byte ID_b = data.Message.ReadByte();
+							PlayerClient client_b = Players.Find(p => p.PlayerID == ID_b);
+							if (client_b == null) return;
+							if (client_b.Connection.EndPoint != data.Sender.EndPoint) return;
+							client_b.NetState = PlayerNetState.Waiting;
+							Console.WriteLine(client_b.Username + " has gotten in the elevator and is waiting.");
 							break;
 					}
 					break;
