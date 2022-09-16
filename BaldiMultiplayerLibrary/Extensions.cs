@@ -24,6 +24,7 @@ namespace BaldiNetworking
 			{
 				writer.Write(list[i].AmHost);
 				writer.Write(list[i].PlayerID);
+				writer.Write(list[i].Username);
 			}
 		}
 
@@ -33,7 +34,9 @@ namespace BaldiNetworking
 			int length = (int)reader.ReadByte();
 			for (int i = 0; i < length; i++)
 			{
-				update.Add(new PlayerClient(null, reader.ReadBoolean(), reader.ReadByte()));
+				PlayerClient cl = new PlayerClient(null, reader.ReadBoolean(), reader.ReadByte());
+				cl.Username = reader.ReadString();
+				update.Add(cl);
 			}
 			return update;
 		}

@@ -30,6 +30,20 @@ namespace BaldiMultiplayer
 
 		public static byte MyPlayerID;
 
+		public static bool AllowStart;
+
+
+		void NameClicked(string name)
+        {
+			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ClientPacket, (byte)ClientRPCs.SetName);
+			Console.WriteLine(MyPlayer.PlayerID);
+			writer.Write(MyPlayer.PlayerID);
+			writer.Write(name);
+			writer.EndMessage();
+			connection.Send(writer);
+			writer.Recycle();
+		}
+
 		void DataRecieved(DataReceivedEventArgs data)
 		{
 			data.Message.ReadByte(); //2 bytes of bullshit
@@ -41,6 +55,30 @@ namespace BaldiMultiplayer
 				case (byte)TopRPCs.ServerPacket:
 					switch (second_tag)
 					{
+						case (byte)ServerRPCs.PlayerJoined:
+							PlayerClient cl = new PlayerClient();
+							cl.AmHost = data.Message.ReadBoolean();
+							cl.PlayerID = data.Message.ReadByte();
+							cl.Username = data.Message.ReadString();
+
+							cl.NetState = PlayerNetState.Connected;
+							Players.Add(cl);
+							Console.WriteLine($"{cl.Username} has joined!");
+							break;
+
+						case (byte)ServerRPCs.PlayerLeft:
+							byte toremove = data.Message.ReadByte();
+							PlayerClient clienttoremove = Players.Find(x => x.PlayerID == toremove);
+							if (clienttoremove == null)
+                            {
+								Console.WriteLine("Tried to remove non existant client(client disconnected before sending name?)");
+								return;
+                            }
+							Console.WriteLine($"{clienttoremove.Username} has left!");
+							Players.Remove(clienttoremove);
+							break;
+
+
 						case (byte)ServerRPCs.WelcomeSendData:
 							Console.WriteLine("Succesfully recieved welcome message from server!");
 							AmIHost = data.Message.ReadBoolean();
@@ -54,6 +92,12 @@ namespace BaldiMultiplayer
 								MyPlayer = Players[Players.Count - 1];
 							}
 							NameMenuManager.AllowContinue(true);
+							break;
+						case (byte)ServerRPCs.ShowGameStart:
+							AllowStart = true;
+							break;
+						case (byte)ServerRPCs.GameStarted:
+							Singleton<ElevatorScreen>.Instance.StartGame();
 							break;
 						default:
 							break;
@@ -82,23 +126,6 @@ namespace BaldiMultiplayer
 
 		}
 
-		void OnSceneChange(Scene scene, LoadSceneMode mode)
-		{
-			if (scene.name == "MainMenu")
-			{
-				Console.WriteLine("Loaded main menu! Sending save name to server!");
-				MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ClientPacket,(byte)ClientRPCs.SetName);
-				Console.WriteLine(MyPlayer.PlayerID);
-				writer.Write(MyPlayer.PlayerID);
-				writer.Write(Singleton<PlayerFileManager>.Instance.fileName);
-				writer.EndMessage();
-				connection.Send(writer);
-				writer.Recycle();
-
-
-				SceneManager.sceneLoaded -= OnSceneChange;
-			}
-		}
 
 		void Awake()
 		{
@@ -106,8 +133,7 @@ namespace BaldiMultiplayer
 			harmony.PatchAll();
 			NameMenuManager.AddPreStartPage("mp_connect_button", true);
 			NameMenuManager.AddToPage("mp_connect_button",new MenuGeneric("connect_button", "Connect", Connect));
-
-			SceneManager.sceneLoaded += OnSceneChange;
+			NameMenuManager.OnNameClicked += NameClicked;
 
 		}
 	}

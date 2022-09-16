@@ -11,6 +11,7 @@ namespace BaldiNetworking
 		Connected,
 		FullyLoaded,
 		Waiting,
+		LevelGeneratedWaiting,
 		Ingame
 	}
 

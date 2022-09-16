@@ -17,13 +17,17 @@ namespace BaldiNetworking
 	{
 		WelcomeSendData,
 		ChangeHost,
-		GameStarted
+		GameStarted,
+		PlayerJoined,
+		PlayerLeft,
+		ShowGameStart
 	}
 
 	public enum ClientRPCs : byte
 	{
 		SetName,
 		EnterElevator,
+		LevelLoaded,
 		GameStart
 	}
 }

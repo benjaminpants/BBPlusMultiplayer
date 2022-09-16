@@ -15,15 +15,46 @@ namespace BaldiServer
 
 		public static GameData Data = new GameData();
 
-
-		public static void SendToAllPlayers(MessageWriter writer)
+		public static void SendToAllPlayers(MessageWriter writer, byte except = 255)
 		{
 			foreach (PlayerClient player in Players)
 			{
-				if (player.NetState == PlayerNetState.Disconnected || player.Connection == null) continue;
+				if (player.NetState == PlayerNetState.Disconnected || player.Connection == null || player.PlayerID == except) continue;
 				player.Connection.Send(writer);
 			}
 			writer.Recycle();
+		}
+
+		public static MessageWriter CreateNewPlayerPacket(PlayerClient cl)
+        {
+			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ServerPacket, (byte)ServerRPCs.PlayerJoined);
+			writer.Write(cl.AmHost);
+			writer.Write(cl.PlayerID);
+			writer.Write(cl.Username);
+			writer.EndMessage();
+			return writer;
+		}
+
+		public static MessageWriter CreateNewPlayerLeftPacket(PlayerClient cl)
+		{
+			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ServerPacket, (byte)ServerRPCs.PlayerLeft);
+			writer.Write(cl.PlayerID);
+			writer.EndMessage();
+			return writer;
+		}
+
+		public static PlayerClient Host { 
+			get
+            {
+				return Players.Find(x => x.AmHost);
+            }
+			set
+            {
+				Host.AmHost = false;
+				value.AmHost = true;
+
+			}
+		
 		}
 
 
@@ -46,6 +77,10 @@ namespace BaldiServer
 
 		public static void DisconnectPlayer(object sender, DisconnectedEventArgs e)
 		{
+			foreach (PlayerClient cl in Players.FindAll(p => p.NetState == PlayerNetState.Disconnected))
+			{
+				SendToAllPlayers(CreateNewPlayerLeftPacket(cl));
+			}
 			ClearDisconnectedPlayers();
 		}
 
@@ -68,6 +103,24 @@ namespace BaldiServer
 			Console.WriteLine("The server has loaded");
 			CommandLoop();
 		}
+
+		static void CheckForLevelLoad()
+        {
+			if (Players.Count == 0) return;
+			int loadedplayers = 0;
+			foreach (PlayerClient player in Players)
+            {
+				loadedplayers += (player.NetState == PlayerNetState.LevelGeneratedWaiting ? 1 : 0);
+            }
+			if (loadedplayers == Players.Count)
+            {
+				Console.WriteLine("All players have loaded the level, sending host StartGame packet..");
+				MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ServerPacket, (byte)ServerRPCs.ShowGameStart);
+				writer.EndMessage();
+				Host.Connection.Send(writer);
+
+			}
+        }
 
 		static void DataRecieved(DataReceivedEventArgs data)
 		{
@@ -97,6 +150,7 @@ namespace BaldiServer
 							client.Username = VerificationChecks.VerifyUsername(data.Message.ReadString(), CurrentPlayerUsernames);
 							client.NetState = PlayerNetState.FullyLoaded;
 							Console.WriteLine(client.Username + " has joined and gotten their username verified!");
+							SendToAllPlayers(CreateNewPlayerPacket(client), ID);
 							break;
 						case ClientRPCs.EnterElevator:
 							byte ID_b = data.Message.ReadByte();
@@ -105,6 +159,25 @@ namespace BaldiServer
 							if (client_b.Connection.EndPoint != data.Sender.EndPoint) return;
 							client_b.NetState = PlayerNetState.Waiting;
 							Console.WriteLine(client_b.Username + " has gotten in the elevator and is waiting.");
+							break;
+						case ClientRPCs.LevelLoaded:
+							byte ID_c = data.Message.ReadByte();
+							PlayerClient client_c = Players.Find(p => p.PlayerID == ID_c);
+							if (client_c == null) return;
+							if (client_c.Connection.EndPoint != data.Sender.EndPoint) return;
+							client_c.NetState = PlayerNetState.LevelGeneratedWaiting;
+							Console.WriteLine(client_c.Username + " has loaded into the level.");
+							CheckForLevelLoad();
+							break;
+						case ClientRPCs.GameStart:
+							byte ID_d = data.Message.ReadByte();
+							PlayerClient client_d = Players.Find(p => p.PlayerID == ID_d);
+							if (client_d == null) return;
+							if (!client_d.AmHost) return;
+							if (client_d.Connection.EndPoint != data.Sender.EndPoint) return;
+							MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ServerPacket, (byte)ServerRPCs.GameStarted);
+							writer.EndMessage();
+							SendToAllPlayers(writer);
 							break;
 					}
 					break;
@@ -122,7 +195,7 @@ namespace BaldiServer
 		static void NewConnectionHandler(NewConnectionEventArgs args)
 		{
 			Connection connect = args.Connection;
-			Console.WriteLine("Connection recieved, attempting to send data packet!");
+			Console.WriteLine("Connection recieved, attempting to send welcome packet!");
 			connect.DataReceived += DataRecieved;
 			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable,TopRPCs.ServerPacket,(byte)ServerRPCs.WelcomeSendData);
 			writer.Write(Players.Count == 0); //Should this player be the host?
