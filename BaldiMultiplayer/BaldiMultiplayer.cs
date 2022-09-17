@@ -26,6 +26,8 @@ namespace BaldiMultiplayer
 
 		public static List<PlayerClient> Players = new List<PlayerClient>();
 
+		public static List<NetObject> Objects = new List<NetObject>();
+
 		public static PlayerClient MyPlayer;
 
 		public static byte MyPlayerID;
@@ -36,7 +38,6 @@ namespace BaldiMultiplayer
 		void NameClicked(string name)
         {
 			MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ClientPacket, (byte)ClientRPCs.SetName);
-			Console.WriteLine(MyPlayer.PlayerID);
 			writer.Write(MyPlayer.PlayerID);
 			writer.Write(name);
 			writer.EndMessage();
@@ -72,7 +73,7 @@ namespace BaldiMultiplayer
 							if (clienttoremove == null)
                             {
 								Console.WriteLine("Tried to remove non existant client(client disconnected before sending name?)");
-								return;
+								break;
                             }
 							Console.WriteLine($"{clienttoremove.Username} has left!");
 							Players.Remove(clienttoremove);
@@ -91,6 +92,11 @@ namespace BaldiMultiplayer
 								Players.Add(new PlayerClient(null, AmIHost, MyPlayerID));
 								MyPlayer = Players[Players.Count - 1];
 							}
+							Players.Sort(delegate (PlayerClient x, PlayerClient y)
+							{
+								return (x.PlayerID == MyPlayerID) == true ? -1 : 1;
+							});
+							Console.WriteLine(Players[0].PlayerID == MyPlayerID);
 							NameMenuManager.AllowContinue(true);
 							break;
 						case (byte)ServerRPCs.ShowGameStart:
@@ -100,6 +106,21 @@ namespace BaldiMultiplayer
 							Singleton<ElevatorScreen>.Instance.StartGame();
 							break;
 						default:
+							break;
+					}
+					break;
+				case (byte)TopRPCs.PlayerObjectPacket:
+					switch (second_tag)
+					{
+						case (byte)PlayerObjectRPCs.UpdatePosition:
+							byte player = data.Message.ReadByte();
+							PlayerClient cl = Players.Find(p => p.PlayerID == player);
+							if (cl == null) break;
+							if (cl.PlayerID == MyPlayerID) break;
+							PlayerManager pm = Singleton<CoreGameManager>.Instance.GetPlayer(cl.AssignedPlayerObject);
+							pm.plm.gameObject.transform.position = data.Message.ReadVector3();
+							pm.plm.gameObject.transform.rotation = data.Message.ReadQuaternion();
+							//pm.plm.cc.Move(data.Message.ReadVector3());
 							break;
 					}
 					break;

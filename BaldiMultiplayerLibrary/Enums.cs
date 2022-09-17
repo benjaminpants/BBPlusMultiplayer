@@ -9,7 +9,8 @@ namespace BaldiNetworking
 		ServerPacket = 3,
 		GameStatePacket,
 		ClientPacket,
-		ObjectPacket
+		ObjectPacket,
+		PlayerObjectPacket
 	}
 
 
@@ -30,4 +31,5 @@ namespace BaldiNetworking
 		LevelLoaded,
 		GameStart
 	}
+
 }

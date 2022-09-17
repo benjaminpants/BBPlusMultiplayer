@@ -8,10 +8,15 @@ namespace BaldiNetworking
 	{
 
 		public int ObjectID;
+		public PlayerClient Owner;
 
-		public virtual void Serialize(MessageWriter writer)
+		public virtual void Serialize(MessageWriter writer, bool InitialSend)
 		{
 			writer.Write(ObjectID);
+			if (InitialSend)
+            {
+				writer.Write(Owner.PlayerID);
+            }
 		}
 
 

@@ -18,5 +18,14 @@ namespace BaldiNetworking
 
 			return writer;
 		}
+
+		public static MessageWriter StartPacketHeaderless(SendOption option, TopRPCs rpctype)
+		{
+			MessageWriter writer = MessageWriter.Get(option);//new MessageWriter(32);
+			writer.Clear(option);
+			writer.StartMessage((byte)rpctype);
+
+			return writer;
+		}
 	}
 }

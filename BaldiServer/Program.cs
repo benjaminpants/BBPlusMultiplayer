@@ -13,6 +13,8 @@ namespace BaldiServer
 
 		public static List<PlayerClient> Players = new List<PlayerClient>();
 
+		public static List<NetObject> Objects = new List<NetObject>();
+
 		public static GameData Data = new GameData();
 
 		public static void SendToAllPlayers(MessageWriter writer, byte except = 255)
@@ -140,8 +142,8 @@ namespace BaldiServer
 						case ClientRPCs.SetName:
 							byte ID = data.Message.ReadByte();
 							PlayerClient client = Players.Find(p => p.PlayerID == ID);
-							if (client == null) return;
-							if (client.Connection.EndPoint != data.Sender.EndPoint) return;
+							if (client == null) break;
+							if (client.Connection.EndPoint != data.Sender.EndPoint) break;
 							List<string> CurrentPlayerUsernames = new List<string>();
 							for (int i = 0; i < Players.Count; i++)
 							{
@@ -155,16 +157,16 @@ namespace BaldiServer
 						case ClientRPCs.EnterElevator:
 							byte ID_b = data.Message.ReadByte();
 							PlayerClient client_b = Players.Find(p => p.PlayerID == ID_b);
-							if (client_b == null) return;
-							if (client_b.Connection.EndPoint != data.Sender.EndPoint) return;
+							if (client_b == null) break;
+							if (client_b.Connection.EndPoint != data.Sender.EndPoint) break;
 							client_b.NetState = PlayerNetState.Waiting;
 							Console.WriteLine(client_b.Username + " has gotten in the elevator and is waiting.");
 							break;
 						case ClientRPCs.LevelLoaded:
 							byte ID_c = data.Message.ReadByte();
 							PlayerClient client_c = Players.Find(p => p.PlayerID == ID_c);
-							if (client_c == null) return;
-							if (client_c.Connection.EndPoint != data.Sender.EndPoint) return;
+							if (client_c == null) break;
+							if (client_c.Connection.EndPoint != data.Sender.EndPoint) break;
 							client_c.NetState = PlayerNetState.LevelGeneratedWaiting;
 							Console.WriteLine(client_c.Username + " has loaded into the level.");
 							CheckForLevelLoad();
@@ -172,14 +174,33 @@ namespace BaldiServer
 						case ClientRPCs.GameStart:
 							byte ID_d = data.Message.ReadByte();
 							PlayerClient client_d = Players.Find(p => p.PlayerID == ID_d);
-							if (client_d == null) return;
-							if (!client_d.AmHost) return;
-							if (client_d.Connection.EndPoint != data.Sender.EndPoint) return;
+							if (client_d == null) break;
+							if (!client_d.AmHost) break;
+							if (client_d.Connection.EndPoint != data.Sender.EndPoint) break;
 							MessageWriter writer = PacketStuff.StartPacket(SendOption.Reliable, TopRPCs.ServerPacket, (byte)ServerRPCs.GameStarted);
 							writer.EndMessage();
 							SendToAllPlayers(writer);
 							break;
 					}
+					break;
+				case TopRPCs.PlayerObjectPacket:
+					PlayerObjectRPCs rpc_x = (PlayerObjectRPCs)second_tag;
+					byte ID_x = data.Message.ReadByte();
+					PlayerClient client_x = Players.Find(p => p.PlayerID == ID_x);
+					if (client_x == null) break;
+					if (client_x.Connection.EndPoint != data.Sender.EndPoint) break;
+					switch (rpc_x)
+                    {
+						case PlayerObjectRPCs.UpdatePosition:
+							MessageWriter writer = PacketStuff.StartPacket(SendOption.None, TopRPCs.PlayerObjectPacket, (byte)PlayerObjectRPCs.UpdatePosition);
+							writer.Write(ID_x);
+							writer.Write(data.Message.ReadVector3());
+							writer.Write(data.Message.ReadQuaternion());
+							writer.Write(data.Message.ReadVector3());
+							writer.EndMessage();
+							SendToAllPlayers(writer);
+							break;
+                    }
 					break;
 			}
 			data.Message.Recycle();

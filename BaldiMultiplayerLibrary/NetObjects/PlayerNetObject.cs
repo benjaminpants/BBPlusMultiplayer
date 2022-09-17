@@ -17,6 +17,8 @@ namespace BaldiNetworking
 	{
 		public Vector3 Position;
 
+		public Vector3 Velocity;
+
 		public Quaternion Rotation;
 
 		public PlayerManager mymanager;
@@ -33,12 +35,12 @@ namespace BaldiNetworking
 			writer.Recycle();
 		}
 
-
-		public override void Serialize(MessageWriter writer)
+		public override void Serialize(MessageWriter writer, bool InitialSend)
 		{
-			base.Serialize(writer);
+			base.Serialize(writer, InitialSend);
 			writer.Write(Position);
 			writer.Write(Rotation);
+			writer.Write(Velocity);
 			//maybe dont write activity modifiers because of how heavily act modifiers rely on being spawned by certain scripts
 			//writer.Write(am.Count);
 			//for (int i = 0; i < am.Count; i++)
@@ -52,6 +54,7 @@ namespace BaldiNetworking
 			base.Deserialize(reader);
 			Position = reader.ReadVector3();
 			Rotation = reader.ReadQuaternion();
+			Velocity = reader.ReadVector3();
 			//am = reader.read
 		}
 

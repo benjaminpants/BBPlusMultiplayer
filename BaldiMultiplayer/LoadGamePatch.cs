@@ -25,14 +25,4 @@ namespace BaldiMultiplayer
 			BasePlugin.connection.Send(writer);
 		}
 	}
-
-	[HarmonyPatch(typeof(CoreGameManager))]
-	[HarmonyPatch("SpawnPlayers")]
-	class SetPlayerCountPatch
-    {
-		static void Prefix()
-        {
-			Singleton<CoreGameManager>.Instance.setPlayers = BasePlugin.Players.Count;
-		}
-    }
 }
