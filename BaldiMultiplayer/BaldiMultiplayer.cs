@@ -155,7 +155,6 @@ namespace BaldiMultiplayer
 			NameMenuManager.AddPreStartPage("mp_connect_button", true);
 			NameMenuManager.AddToPage("mp_connect_button",new MenuGeneric("connect_button", "Connect", Connect));
 			NameMenuManager.OnNameClicked += NameClicked;
-
 		}
 	}
 }

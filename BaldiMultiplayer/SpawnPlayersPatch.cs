@@ -104,6 +104,18 @@ namespace BaldiMultiplayer
 					___cameras[i].camCom.enabled = false;
 					___cameras[i].canvasCam.enabled = false;
 					___huds[i].Hide(true);
+					/*GameObject obj = new GameObject();
+					obj.transform.parent = ___players[i].gameObject.transform;
+					Texture2D texture = Texture2D.whiteTexture;
+					SpriteRenderer spr = obj.AddComponent<SpriteRenderer>();
+					spr.sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 5.0f); //figure out how to actually do stuff
+					obj.layer = LayerMask.NameToLayer("Billboard");
+					obj.transform.position = new Vector3(0f,5f,0f);*/
+					//MeshRenderer renderer = ___players[i].gameObject.GetComponent<MeshRenderer>();
+					//Console.WriteLine(___players[i].gameObject.layer);
+					//___players[i].gameObject.layer &= LayerMask.NameToLayer("Billboard");
+					//renderer.material = Singleton<BaseGameManager>.Instance.levelObject.classFloorMats[0].selection;
+					//renderer.enabled = true;
 				}
 			}
 			ec.AssignPlayers();
